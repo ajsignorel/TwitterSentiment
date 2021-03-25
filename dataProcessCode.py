@@ -1,31 +1,15 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Feb 20 14:01:53 2021
 
-@author: Owner
-"""
-
+#Utility Libaries
 import re
-#import pickle
-#import numpy as np
 import pandas as pd
-#import seaborn as sns
-#from wordcloud import WordCloud
-#import matplotlib.pyplot as plt
+from pandas import DataFrame
 
 #Natural Language ToolKit
 import nltk
-nltk.download('wordnet')
+#nltk.download('wordnet')
+nltk.download('stopwords')
 from nltk.stem import WordNetLemmatizer
-
-
-# Logistic Regression
-#from sklearn.linear_model import LogisticRegression
-
-# Sklearn
-#from sklearn.model_selection import train_test_split
-#from sklearn.feature_extraction.text import TfidfVectorizer
-#from sklearn.metrics import confusion_matrix, classification_repor
+from nltk.corpus import stopwords
 
 
 columnsData  = ["sentiment", "ids", "date", "flag", "user", "text"]
@@ -35,7 +19,8 @@ data = pd.read_csv('C:/Datasets/TwitterData/training1600000.csv', encoding=encod
 #Remove columns so data[] only has sentiment and text
 #Removed Columns: ids, date, flag, and user
 data = data[['sentiment','text']]
-    # Replace sentiment value of 4 to 1
+
+# Replace sentiment value of 4 to 1
 data['sentiment'] = data['sentiment'].replace(4,1)
 
 #Graphing the Data
@@ -55,42 +40,25 @@ emojis = {':)': 'smile', ':-)': 'smile', ';d': 'wink', ':-E': 'vampire', ':(': '
           ';-)': 'wink', 'O:-)': 'angel','O*-)': 'angel','(:-D': 'gossip', '=^.^=': 'cat'}
 
 
-#Dictionary of Stopwords
-stopwordlist = {'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", 
-                "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 
-                'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's",
-                'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which',
-                'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 
-                'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing',
-                'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 
-                'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before',
-                'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over',
-                'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 
-                'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 
-                'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can',
-                'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're',
-                've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't",
-                'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn', "mightn't",
-                'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't",
-                'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"}
-
+#List of Stopwords
+swl = stopwords.words("english")
+#print(stopwordlist)
 
 def preprocess(textdata):
     processedText = []
     
     # Create Lemmatizer and Stemmer.
-    wordLemm = WordNetLemmatizer()
+    wLemm = WordNetLemmatizer()
     
     # Defining regex patterns.
     urlPattern        = r"((http://)[^ ]*|(https://)[^ ]*|( www\.)[^ ]*)"
     userPattern       = '@[^\s]+'
-    
     for tweet in textdata:
         tweet = tweet.lower()
         
-        # Replace all URls with 'URL'
+        # Replaces all URls with 'URL'
         tweet = re.sub(urlPattern,' URL',tweet)
-        # Replace all emojis.
+        # Replaces all emojis.
         for emoji in emojis.keys():
             tweet = tweet.replace(emoji, "EMOJI" + emojis[emoji])        
         # Replace @USERNAME to 'USER'.
@@ -99,10 +67,10 @@ def preprocess(textdata):
         tweetwords = ''
         for word in tweet.split():
             # Checking if the word is a stopword.
-            if word not in stopwordlist:
+            if word not in swl:
                 if len(word)>1:
                 #Lemmatizing the word.
-                    word = wordLemm.lemmatize(word)
+                    word = wLemm.lemmatize(word)
                     tweetwords += (word+' ')
             
         processedText.append(tweetwords)
@@ -114,5 +82,9 @@ t = time.time()
 processedtext = preprocess(text)
 print(f'Processing Text Complete.')
 print(f'Time: {round(time.time()-t)} seconds')
-
+df1 = DataFrame (sentiment, columns=['sentiment'])
+df2 = DataFrame (processedtext, columns=['text'])
+processedData = df1.join(df2)
+#print(processedData)
+#processedData.to_csv(r'C:\Users\Owner\Dropbox\TwitterSentiment\processedData.csv', index=False, encoding='ISO-8859-1')
 
